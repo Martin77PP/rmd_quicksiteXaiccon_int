@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="mat" />
+
+
+<title>lavAnno shiny</title>
+
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+<style type="text/css">
+#rmd-source-code {
+  display: none;
+}
+</style>
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+<style type="text/css">
+.kable-table {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: auto;
+  padding-left: 8px;
+  padding-right: 8px;
+  margin-bottom: 20px;
+  max-height: 350px;
+}
+
+.kable-table table {
+  margin-bottom: 0px;
+}
+
+.kable-table table>thead>tr>th {
+  border: none;
+  border-bottom: 2px solid #dddddd;
+}
+
+.kable-table table>thead {
+  background-color: #fff;
+}
+</style>
+
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+
+
+<div id="section-header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+<li role="separator" class="divider"></li>
+<li><a id="rmd-download-source" href="#">Download Rmd</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">lavAnno shiny</h1>
+<h4 class="author">mat</h4>
+<h4 class="date">8/23/2021</h4>
+
+</div>
+
+<div id="section-TOC">
+<ul>
+<li><a href="#section-inputs-and-outputs">Inputs and Outputs</a></li>
+<li><a href="#section-embedded-application">Embedded Application</a></li>
+</ul>
+</div>
+
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-text-begin -->
+<p>This R Markdown document is made interactive using Shiny. Unlike the more traditional workflow of creating static reports, you can now create documents that allow your readers to change the assumptions underlying your analysis and see the results immediately.</p>
+<p>To learn more, see <a href="http://rmarkdown.rstudio.com/authoring_shiny.html">Interactive Documents</a>.</p>
+<div id="section-inputs-and-outputs" class="section level2">
+<h2>Inputs and Outputs</h2>
+<p>You can embed Shiny inputs and outputs in your document. Outputs are automatically updated whenever inputs change. This demonstrates how a standard R plot can be made interactive by wrapping it in the Shiny <code>renderPlot</code> function. The <code>selectInput</code> and <code>sliderInput</code> functions create the input widgets used to drive the plot.</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<div class="shiny-input-panel">
+<div class="shiny-flow-layout">
+<div>
+<div class="form-group shiny-input-container">
+<label class="control-label" id="n_breaks-label" for="n_breaks">Number of bins:</label>
+<div>
+<select id="n_breaks"><option value="10">10</option>
+<option value="20" selected>20</option>
+<option value="35">35</option>
+<option value="50">50</option></select>
+<script type="application/json" data-for="n_breaks" data-nonempty="">{"plugins":["selectize-plugin-a11y"]}</script>
+</div>
+</div>
+</div>
+<div>
+<div class="form-group shiny-input-container">
+<label class="control-label" id="bw_adjust-label" for="bw_adjust">Bandwidth adjustment:</label>
+<input class="js-range-slider" id="bw_adjust" data-skin="shiny" data-min="0.2" data-max="2" data-from="1" data-step="0.2" data-grid="true" data-grid-num="9" data-grid-snap="false" data-prettify-separator="," data-prettify-enabled="true" data-keyboard="true" data-data-type="number"/>
+</div>
+</div>
+</div>
+</div>
+<p><div id="out28662b8268df545e" class="shiny-plot-output" style="width:100%;height:400px;"></div></p>
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+</div>
+<div id="section-embedded-application" class="section level2">
+<h2>Embedded Application</h2>
+<p>It’s also possible to embed an entire Shiny application within an R Markdown document using the <code>shinyAppDir</code> function. This example embeds a Shiny application located in another directory:</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<p><iframe data-deferred-src="app45f4031c6723c5b88ced7e280fd401a8/?w=&amp;__subapp__=1" width="100%" height="550" class="shiny-frame shiny-frame-deferred"></iframe></p>
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>Note the use of the <code>height</code> parameter to determine how much vertical space the embedded application should occupy.</p>
+<p>You can also use the <code>shinyApp</code> function to define an application inline rather then in an external directory.</p>
+<p>In all of R code chunks above the <code>echo = FALSE</code> attribute is used. This is to prevent the R code within the chunk from rendering in the document alongside the Shiny components.</p>
+<!-- rnb-text-end -->
+</div>
+
+<div id="rmd-source-code">LS0tDQp0aXRsZTogImxhdkFubm8gc2hpbnkiDQphdXRob3I6ICJtYXQiDQpkYXRlOiAiOC8yMy8yMDIxIg0Kb3V0cHV0OiANCiAgaHRtbF9ub3RlYm9vazogDQogICAgdG9jOiB5ZXMNCnJ1bnRpbWU6IHNoaW55DQotLS0NCg0KYGBge3Igc2V0dXAsIGluY2x1ZGU9RkFMU0V9DQprbml0cjo6b3B0c19jaHVuayRzZXQoZWNobyA9IFRSVUUpDQpgYGANCg0KVGhpcyBSIE1hcmtkb3duIGRvY3VtZW50IGlzIG1hZGUgaW50ZXJhY3RpdmUgdXNpbmcgU2hpbnkuIFVubGlrZSB0aGUgbW9yZSB0cmFkaXRpb25hbCB3b3JrZmxvdyBvZiBjcmVhdGluZyBzdGF0aWMgcmVwb3J0cywgeW91IGNhbiBub3cgY3JlYXRlIGRvY3VtZW50cyB0aGF0IGFsbG93IHlvdXIgcmVhZGVycyB0byBjaGFuZ2UgdGhlIGFzc3VtcHRpb25zIHVuZGVybHlpbmcgeW91ciBhbmFseXNpcyBhbmQgc2VlIHRoZSByZXN1bHRzIGltbWVkaWF0ZWx5LiANCg0KVG8gbGVhcm4gbW9yZSwgc2VlIFtJbnRlcmFjdGl2ZSBEb2N1bWVudHNdKGh0dHA6Ly9ybWFya2Rvd24ucnN0dWRpby5jb20vYXV0aG9yaW5nX3NoaW55Lmh0bWwpLg0KDQojIyBJbnB1dHMgYW5kIE91dHB1dHMNCg0KWW91IGNhbiBlbWJlZCBTaGlueSBpbnB1dHMgYW5kIG91dHB1dHMgaW4geW91ciBkb2N1bWVudC4gT3V0cHV0cyBhcmUgYXV0b21hdGljYWxseSB1cGRhdGVkIHdoZW5ldmVyIGlucHV0cyBjaGFuZ2UuICBUaGlzIGRlbW9uc3RyYXRlcyBob3cgYSBzdGFuZGFyZCBSIHBsb3QgY2FuIGJlIG1hZGUgaW50ZXJhY3RpdmUgYnkgd3JhcHBpbmcgaXQgaW4gdGhlIFNoaW55IGByZW5kZXJQbG90YCBmdW5jdGlvbi4gVGhlIGBzZWxlY3RJbnB1dGAgYW5kIGBzbGlkZXJJbnB1dGAgZnVuY3Rpb25zIGNyZWF0ZSB0aGUgaW5wdXQgd2lkZ2V0cyB1c2VkIHRvIGRyaXZlIHRoZSBwbG90Lg0KDQpgYGB7ciBlcnVwdGlvbnMsIGVjaG89RkFMU0V9DQppbnB1dFBhbmVsKA0KICBzZWxlY3RJbnB1dCgibl9icmVha3MiLCBsYWJlbCA9ICJOdW1iZXIgb2YgYmluczoiLA0KICAgICAgICAgICAgICBjaG9pY2VzID0gYygxMCwgMjAsIDM1LCA1MCksIHNlbGVjdGVkID0gMjApLA0KICANCiAgc2xpZGVySW5wdXQoImJ3X2FkanVzdCIsIGxhYmVsID0gIkJhbmR3aWR0aCBhZGp1c3RtZW50OiIsDQogICAgICAgICAgICAgIG1pbiA9IDAuMiwgbWF4ID0gMiwgdmFsdWUgPSAxLCBzdGVwID0gMC4yKQ0KKQ0KDQpyZW5kZXJQbG90KHsNCiAgaGlzdChmYWl0aGZ1bCRlcnVwdGlvbnMsIHByb2JhYmlsaXR5ID0gVFJVRSwgYnJlYWtzID0gYXMubnVtZXJpYyhpbnB1dCRuX2JyZWFrcyksDQogICAgICAgeGxhYiA9ICJEdXJhdGlvbiAobWludXRlcykiLCBtYWluID0gIkdleXNlciBlcnVwdGlvbiBkdXJhdGlvbiIpDQogIA0KICBkZW5zIDwtIGRlbnNpdHkoZmFpdGhmdWwkZXJ1cHRpb25zLCBhZGp1c3QgPSBpbnB1dCRid19hZGp1c3QpDQogIGxpbmVzKGRlbnMsIGNvbCA9ICJibHVlIikNCn0pDQpgYGANCg0KIyMgRW1iZWRkZWQgQXBwbGljYXRpb24NCg0KSXQncyBhbHNvIHBvc3NpYmxlIHRvIGVtYmVkIGFuIGVudGlyZSBTaGlueSBhcHBsaWNhdGlvbiB3aXRoaW4gYW4gUiBNYXJrZG93biBkb2N1bWVudCB1c2luZyB0aGUgYHNoaW55QXBwRGlyYCBmdW5jdGlvbi4gVGhpcyBleGFtcGxlIGVtYmVkcyBhIFNoaW55IGFwcGxpY2F0aW9uIGxvY2F0ZWQgaW4gYW5vdGhlciBkaXJlY3Rvcnk6DQoNCmBgYHtyIHRhYnNldHMsIGVjaG89RkFMU0V9DQpzaGlueUFwcERpcigNCiAgc3lzdGVtLmZpbGUoImV4YW1wbGVzLzA2X3RhYnNldHMiLCBwYWNrYWdlID0gInNoaW55IiksDQogIG9wdGlvbnMgPSBsaXN0KA0KICAgIHdpZHRoID0gIjEwMCUiLCBoZWlnaHQgPSA1NTANCiAgKQ0KKQ0KYGBgDQoNCk5vdGUgdGhlIHVzZSBvZiB0aGUgYGhlaWdodGAgcGFyYW1ldGVyIHRvIGRldGVybWluZSBob3cgbXVjaCB2ZXJ0aWNhbCBzcGFjZSB0aGUgZW1iZWRkZWQgYXBwbGljYXRpb24gc2hvdWxkIG9jY3VweS4NCg0KWW91IGNhbiBhbHNvIHVzZSB0aGUgYHNoaW55QXBwYCBmdW5jdGlvbiB0byBkZWZpbmUgYW4gYXBwbGljYXRpb24gaW5saW5lIHJhdGhlciB0aGVuIGluIGFuIGV4dGVybmFsIGRpcmVjdG9yeS4NCg0KSW4gYWxsIG9mIFIgY29kZSBjaHVua3MgYWJvdmUgdGhlIGBlY2hvID0gRkFMU0VgIGF0dHJpYnV0ZSBpcyB1c2VkLiBUaGlzIGlzIHRvIHByZXZlbnQgdGhlIFIgY29kZSB3aXRoaW4gdGhlIGNodW5rIGZyb20gcmVuZGVyaW5nIGluIHRoZSBkb2N1bWVudCBhbG9uZ3NpZGUgdGhlIFNoaW55IGNvbXBvbmVudHMuDQoNCg0KDQo=</div>
+
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+$(document).ready(function () {
+  $('.knitsql-table').addClass('kable-table');
+  var container = $('.kable-table');
+  container.each(function() {
+
+    // move the caption out of the table
+    var table = $(this).children('table');
+    var caption = table.children('caption').detach();
+    caption.insertBefore($(this)).css('display', 'inherit');
+  });
+});
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("section-TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeSourceEmbed("lavAnnoShiny.Rmd");
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
