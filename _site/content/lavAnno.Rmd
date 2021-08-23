@@ -19,14 +19,29 @@ When you click the **Knit** button a document will be generated that includes bo
 library(readr)
 library(ggplot2)
 library(data.table)
+library(plotly)
 ID_5651 <- read_csv("inps/ID-5651.csv")
+ID_5585 <- read_csv("inps/ID-5585.csv")
 ```
+summary dt
+
+```{r ID_5585, "out.width"=1200, "out.height"=800}
+summary(ID_5585)
+variazioni_dt <- as.data.table(ID_5585)
+
+variazioni_dt[,max(Numero_variazioni),.(Regione,Tipologia_variazione,tipologia_incentivo,Nazionalità)]
+
+fig <- plot_ly(variazioni_dt[Numero_variazioni<100], x = ~Numero_variazioni, color = ~Tipologia_variazione, type = "box")
+fig
+```
+
+
 
 ## Including Plots
 
 You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
+```{r pressure, echo=FALSE, "out.width"=1200, "out.height"=800}
 ggplot(ID_5651, aes(`Posizione Prevalente`,Lavoratori)) + geom_col(aes(fill=Cittadinanza), position = "dodge") + facet_grid(vars(Anno))
 ```
 
