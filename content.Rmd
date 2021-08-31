@@ -1,11 +1,12 @@
 ---
-title: "Main page"
+title: "Documenti Personali"
 output:   
   html_document: 
     df_print: paged
 ---
 
-This is where you link to the other files, which are in a folder in the main directory. Make sure the name of the folder does not have an underscore in it. You also need to go knit those files within the folder first. And, if you update the file, **you need to reknit it!**. 
+in questa pagina il collegamento al CV ed alla lettera motivazionale
+
 
 * [lettera motiv](content/documentiPers/letteramotivaiccon.html) 
 * [CV](content/documentiPers/Europass-CV-Piraino_0821.pdf)  

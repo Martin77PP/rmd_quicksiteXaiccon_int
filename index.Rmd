@@ -1,11 +1,27 @@
 ---
-title: "Main Title"
+title: "Indice Sito"
 output: html_document
 ---
 
-This is what will show up on the main page.
+in questa pagina il collegamento alla pagina principale con una dimostrazione di alcune possibilità di visualizzazione ed analisi
 
-* [pagina principale](content/Copy_lavAnno.html)  
+* [Pagina dimostrativa](content/Copy_lavAnno.html)  
+
+allego un link al Glossario Istat per la definizione dei termini utilizzati nella pagina dimostrativa
+
 * [Glossario Istat](content/Istat/Glossario1.pdf) 
+
+ho messo nel sito anche lettera motivazionale e CV
+
+* [lettera motiv](content/documentiPers/letteramotivaiccon.html) 
+* [CV](content/documentiPers/Europass-CV-Piraino_0821.pdf)  
+
+
+
+
+questo è il collegamento al codice utilizzato per creare questo sito
+
+
+-[code repository on GitHub](https://github.com/Martin77PP/rmd_quicksiteXaiccon_int)-
 
 
