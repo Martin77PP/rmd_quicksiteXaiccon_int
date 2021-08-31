@@ -4,3 +4,8 @@ output: html_document
 ---
 
 This is what will show up on the main page.
+
+* [pagina principale](content/Copy_lavAnno.html)  
+* [Glossario Istat](content/Istat/Glossario1.pdf) 
+
+
