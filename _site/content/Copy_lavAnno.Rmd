@@ -1,0 +1,333 @@
+---
+title: "Presentazione MP 09 21"
+author: "mat"
+date: "8/28/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+## R Markdown
+
+Il presente documento è scritto in R Markdown. Markdown è una semplice sintassi di formattazione per la creazione di documenti HTML, PDF e MS Word. Questo documento è stato compilato usando Rstudio, il più diffuso IDE per R. Per maggiori dettagli sull'utilizzo di R Markdown, vedere <http://rmarkdown.rstudio.com>.
+
+I dataset utilizzati provengono dalle banche dati Inps ed Istat, (open data e dataset)
+
+Per la scelta dei dati ho preso spunto da un [report trovato sul vostro sito](https://mk0wwwaicconitmky98w.kinstacdn.com/wp-content/uploads/2020/10/TDH_Report-VIS-v3.pdf) e dalla conoscenzad del settore. Il campione di beneficiari coinvolto nel progetto presentato è particolare e sarebbe più corretto fare un confronto con una popolazione simile 
+
+I dati utilizzati non sono collegati al vostro studio ma hanno solo lo scopo di illustrare alcune possibilità di descrizione, analisi e visualizzazione dei dati tarmite R ed RStudio.
+Si tratta di dataset che presentano dati aggregati quindi non adatti per molti tipi di analisi.
+Il primo dataset preso in esame proviene dall'inps e contiene i dati sui Lavoratori in Italia per Territorio (Provincia e regione), classe di età, sesso posizione lavorativa e cittadinanza
+
+La prima tabella è una descrizione ed un sommario del tipo di dati presenti nel dataset
+
+
+```{r carica librerie e documenti}
+
+library(readr)
+library(tidyverse)
+library(data.table)
+library(plotly)
+library(skimr)
+# library(igraph)
+library(DT)
+library(ggpmisc)
+library(treemap)
+library(d3treeR)
+
+
+
+ID_5651 <- read_csv("inps/ID-5651.csv")
+ID_5585 <- read_csv("inps/ID-5585.csv")
+FORZLV_TitStudio19_20 <- read_csv("Istat/FORZLV_TitStudio19_20.csv")
+OCCUPATI_TitStudio19_20 <- read_csv("Istat/OCCUPATI_TitStudio19_20.csv")
+
+skim(ID_5651)
+# skim(ID_5585)
+
+cat("Questi i valori unici per Posizione lavorativa")
+
+ID_5651$`Posizione Prevalente` %>% unique()
+
+
+```
+
+
+## dt inps
+```{r, "out.width"=1000, "out.height"=600}
+
+colsel <- c("Regione","Provincia","Posizione Prevalente","sesso","Classe età","Cittadinanza")
+
+ID_5651dt <- as.data.table(ID_5651)[,`:=`("Posizione"=`Posizione Prevalente`, "AgeCut"=`Classe età`)]
+ID_5651dt[,Provincia:=gsub("Provincia Autonoma di ","",Provincia)]
+ID_5651dt[,Provincia:=gsub("-Cesena","",Provincia)]
+ID_5651dt[,Provincia:=gsub("/","-",Provincia)]
+
+ID_5651dt[, TotLavAnno:=sum(Lavoratori, na.rm = T),.(Anno)]
+ID_5651dt[, TotLavAnnoPos:=sum(Lavoratori, na.rm = T),.(Anno,Posizione)]
+ID_5651dt[, TotLavProvPos:=sum(Lavoratori, na.rm = T),.(Provincia,Posizione)]
+
+# knitr::kable(ID_5651dt[,.("Lavoratori"=sum(Lavoratori,na.rm = T),"Perc"=Lavoratori/TotLavAnno),
+#                        .(Anno,Cittadinanza)])
+# formula <- y ~ x
+# ID_5651dt %>% filter(Provincia=="Milano" & Posizione=="Dipendente privato") %>%
+#   ggplot(aes(Lavoratori,`Classe età`,color=Cittadinanza)) + geom_boxplot(aes()) + scale_color_discrete(type = c("#008B8B","#EE2C2C")) + #geom_smooth(method = "lm", formula = formula, se = F) +
+#   scale_x_log10() +
+#   facet_wrap(vars(sesso)) 
+#   # stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+#   #              formula = formula, parse = TRUE, size = 3) 
+
+
+# ggplot(ID_5651dt[], aes(Lavoratori)) + geom_density(aes(fill=Cittadinanza)) + 
+#   scale_x_log10()+
+#   scale_fill_discrete(type = c("#FF3030","#228B22")) +
+#   facet_wrap(vars(Anno),scales = "fixed") #coord_cartesian(ylim = c(0, 50))
+
+bx1 <- ggplot(ID_5651dt[Anno==2019,], aes(Lavoratori,Posizione)) +
+  scale_x_log10()+
+  geom_boxplot(aes(fill=sesso),notch = T, outlier.colour = "blue", outlier.shape = 1) + 
+   # geom_jitter(width = 0.2) +
+  scale_fill_discrete(type = c("#FFD39B","#00BFFF")) + 
+  facet_wrap(vars(Cittadinanza))
+
+ggplotly(bx1)
+
+datatable(
+ID_5651dt[Anno==2019,sum(Lavoratori,na.rm = T),.(Cittadinanza,`Posizione Prevalente`)], filter = "top")
+
+LavProvSexAnno <- ID_5651dt[,sum(Lavoratori,na.rm = T),.(Anno,Provincia,Posizione,Cittadinanza)] # ,Regione,AgeCut,sesso
+LavProvSexAnno_cast <- dcast(LavProvSexAnno, Anno + Provincia + Posizione ~ Cittadinanza, value.var = "V1")
+LavProvSexAnno_cast[,`:=`("TotLav" = Extracomunitari + Comunitari)][,`:=`("PercCom" = round((Comunitari/TotLav)*100,2), "PercExtra"=round((Extracomunitari/TotLav)*100,2))]
+
+datatable(LavProvSexAnno_cast,class = "cell-border compact hover", filter = "top")
+
+
+```
+
+nel dataset sono riportati i dati aggregati per territorio una modalità di visualizzazione può essere usata una treemap  
+```{r, "out.width"=1000, "out.height"=600}
+LavAnnoRegPosCit <- ID_5651dt[,.("Lavoratori"=sum(Lavoratori,na.rm = T)),.(Anno,Regione,Posizione,Cittadinanza)]
+LavAnnoRegPosCit[,TotAnnRegCit:=sum(Lavoratori,na.rm = T),.(Anno,Regione,Cittadinanza)][,PercAnnRegCit:=round((Lavoratori/TotAnnRegCit)*100,2)]
+
+tm1 <- treemap(LavAnnoRegPosCit[Cittadinanza=="Extracomunitari" & Regione != "Estero",],
+            index=c("Anno","Posizione"),
+            vSize="PercAnnRegCit",
+            type="index",
+            title = "Composizione percentuale per posizione dei lavoratori stranieri, Per Regione nel 2019",
+            # palette = "Set1",
+            bg.labels=c("transparent"),
+            fontsize.title = 12,
+            fontsize.labels = c(8,6),
+            fontsize.legend = 6,
+            fontcolor.labels = c("#262626", "white"),
+            fontface.labels = c(3,2),
+            align.labels=list(
+              c("left", "top"), 
+              c("right", "bottom")
+            ),
+         overlap.labels=1,                      
+    inflate.labels=F,draw = T
+    ) 
+
+# tm1
+inter <- d3tree2(tm1,  rootname = "Regione")
+inter
+
+```
+
+## map plot
+
+Il primo grafico mostra attraverso la mappa d'italia divisa per provincie la percentuale di lavoratori stranieri sul totale dei lavoratori per gli anni dal 2014 al 2019 questo tipo di visualizzazione rende immediatamente evidente la variazione del dato negli anni 
+
+```{r maps, out.height=800, out.width=1200}
+library(maptools)
+library(pander)
+library(ggalt)
+library(ggthemes)
+# library(tibble)
+library(viridis)
+
+#  , fig.show="hold", out.width="50%"
+
+
+# LavoProv_val1 <- ID_5651dt[,sum(Lavoratori),.(Provincia,Cittadinanza,Posizione)]
+# LavoProv_val1Cast <- dcast(LavoProv_val1, Provincia + Posizione ~ Cittadinanza, value.var = "V1")
+# LavoProv_val1Cast[,ExtraConPerc:= round((Extracomunitari/Comunitari)*100,6)]
+
+LavProvAnno <- ID_5651dt[,sum(Lavoratori,na.rm = T),.(Anno,Provincia,Posizione,Cittadinanza)] # ,Regione,AgeCut,sesso
+LavProvAnno_cast <- dcast(LavProvAnno, Anno + Provincia + Posizione ~ Cittadinanza, value.var = "V1")
+LavProvAnno_cast[,`:=`("ExtraComPerc" = round((Extracomunitari/Comunitari)*100,2),  "TotLav" = Extracomunitari + Comunitari)][,`:=`("PercCom" = round((Comunitari/TotLav)*100,2), "PercExtra"=round((Extracomunitari/TotLav)*100,2))]
+
+# chor_dat2 <- LavProvAnno_cast[,.("Comunitari"=sum(Comunitari, na.rm = T),"Extracomunitari"=sum(Extracomunitari, na.rm = T)),
+#                               .(Anno,Provincia)]
+# chor_dat2[,`:=`("ExtraComPerc" = round((Extracomunitari/Comunitari)*100,2), "TotLav"=Extracomunitari+Comunitari)][,`:=`("PercCom" = round((Comunitari/TotLav)*100,2), "PercExtra"=round((Extracomunitari/TotLav)*100,2))]
+
+# get italy region map
+italy_map <- map_data("italy")
+
+cnames <-aggregate(cbind(long, lat) ~ region, data = italy_map, FUN = function(x) mean(range(x)))
+cnames$angle <-0
+
+gg <- ggplot()
+
+# lay down the base layer
+gg <- gg + geom_map(data=italy_map, map=italy_map,
+                    aes(long, lat, map_id=region),
+                    color="#b2b2b2", size=0.1, fill=NA) 
+
+pl <- gg + geom_map(data=LavProvAnno_cast[Posizione=="Operaio agricolo" ,], map=italy_map,
+                    aes(fill=PercExtra, map_id=Provincia),
+                    color="black",size=0.1) + 
+  scale_fill_viridis_b(name="Perc ExtraCom", option = "C") +
+  facet_wrap(vars(Anno)) +
+  expand_limits(x = italy_map$long, y = italy_map$lat) +
+  theme_few()+
+  theme(legend.position = "bottom",
+        axis.ticks = element_blank(), 
+        axis.title = element_blank(), 
+        axis.text =  element_blank()) +
+  # scale_fill_gradient_tableau(palette = "Green-Gold") + #
+  # scale_fill_gradient(low="#F0F8FF", high="#00008B") +
+  guides(fill = guide_colorbar(barwidth = 10, barheight = .5)) + 
+  geom_text(data=cnames, aes(long, lat, label = region,  
+                             angle=angle, map_id =NULL),color="#FAEBD7",size=0.5) + 
+  ggtitle("all")#+ theme_map()
+
+print(pl)
+
+# pl2 <- gg + geom_map(data=LavProvAnno_cast[Anno==2019,], map=italy_map, # 
+#                     aes(fill=PercExtra, map_id=Provincia),
+#                     color="#b2b2b2",size=0.1) + scale_fill_viridis_c(name="Perc ExtraCom",option = "A") +
+#   expand_limits(x = italy_map$long, y = italy_map$lat) +
+#   theme_few()+
+#   facet_wrap(vars(Posizione)) +  # vars(Anno),
+#   theme(legend.position = "bottom",
+#         axis.ticks = element_blank(),
+#         axis.title = element_blank(),
+#         axis.text =  element_blank()) +
+#   # scale_fill_gradient(low="white", high="blue") +
+#   guides(fill = guide_colorbar(barwidth = 10, barheight = .5)) +
+#   geom_text(data=cnames, aes(long, lat, label = region,
+#                              angle=angle, map_id =NULL), size=0.5) +
+#   ggtitle("2019")#+ theme_map()
+# 
+# print(pl2)
+
+```
+
+
+###new dataset
+
+```{r}
+
+TAXOCCU_RegioniTitStud16_20trim <- read_csv("Istat/TAXOCCU_RegioniTitStud16_20trim.csv")
+TAXATVT_RegioniTitStud16_20trim <- read_csv("Istat/TAXATVT_RegioniTitStud16_20trim.csv")
+TAXDISOCCU_RegioniTitStud16_20trim <- read_csv("Istat/TAXDISOCCU_RegioniTitStud16_20trim.csv")
+TAXINATT_RegioniTitStud16_20trim <- read_csv("Istat/TAXINATT_RegioniTitStud16_20trim.csv")
+
+TassiTitSt <- rbindlist(list(as.data.table(TAXOCCU_RegioniTitStud16_20trim),as.data.table(TAXATVT_RegioniTitStud16_20trim), as.data.table(TAXDISOCCU_RegioniTitStud16_20trim), as.data.table(TAXINATT_RegioniTitStud16_20trim)))
+
+# ggplot(TAXOCCU_RegioniTitStud16_20trim, aes(Value)) + geom_histogram(aes(fill=Territorio))
+
+TassiTitSt[,.N,.(`Tipo dato`,TIPO_DATO_FOL,`Classe di età` , ETA1, Sesso, SEXISTAT1, TITOLO_STUDIO,`Titolo di studio`)]
+
+# TassiTitSt %>% filter(grepl("Q",TIME) & Territorio=="Italia") %>% ggplot(aes(TIME,Value)) + geom_point(aes(color=CITTADINANZA, shape = Sesso)) + facet_grid( vars(TIPO_DATO_FOL),vars(`Titolo di studio`)) + theme(axis.text.x = element_text(angle=45, hjust=0.5), strip.text.y = element_text(angle=0))
+
+```
+### infer explor
+
+```{r, "out.width"=1200, "out.height"=800}
+# ~ 
+
+TassiTitSt_cast1 <- dcast(TassiTitSt, ... ~ TIPO_DATO_FOL + `Tipo dato` , value.var = "Value" )
+
+skim(TassiTitSt_cast1)
+
+# library(ggpmisc)
+formula <- y ~ x
+TassiTitSt_cast1 %>% filter(grepl("Q",TIME) & Territorio=="Italia") %>% ggplot(aes(`ACT_R_tasso di attività`,`EMP_R_tasso di occupazione`,color=CITTADINANZA)) + geom_point(aes(shape=`Titolo di studio`)) + scale_color_discrete(type = c("#008B8B","#EE2C2C")) + geom_smooth(method = "lm", formula = formula, se = F) + facet_grid(cols=vars(Sesso))  +
+  stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+               formula = formula, parse = TRUE, size = 3) 
+
+
+
+TassiTitSt_cast1 %>% filter(grepl("Q",TIME) & Territorio=="Italia") %>% ggplot(aes(`ACT_R_tasso di attività`,`EMP_R_tasso di occupazione`,color=CITTADINANZA)) + geom_point(aes( )) + geom_smooth(method = "lm", se = F) + facet_grid(vars(`Titolo di studio`),vars(Sesso)) 
+
+ttestcitt <- TassiTitSt_cast1 %>% filter(grepl("Q",TIME) & Territorio=="Italia") %>% mutate(EmpActRatio = `EMP_R_tasso di occupazione`/`ACT_R_tasso di attività`)  %>% mutate(EmpActDiff = `ACT_R_tasso di attività` - `EMP_R_tasso di occupazione`)
+
+ttestcitt %>% ggplot(aes(EmpActRatio,fill=CITTADINANZA)) + geom_density()  + facet_grid(vars(TITOLO_STUDIO),vars(Sesso)) #+ geom_smooth(method = "lm", se = F)
+
+# ttestcitt <- TassiTitSt_cast1 %>% filter(grepl("Q",TIME) & Territorio=="Italia") %>% mutate(EmpActRatio = `EMP_R_tasso di occupazione`/`ACT_R_tasso di attività`) %>% filter(!is.na(EmpActRatio)) %>% pivot_wider(names_from = CITTADINANZA, values_from = EmpActRatio)
+
+for (ts in unique(ttestcitt$`Titolo di studio`)) {
+  print(ts)
+  print(with(ttestcitt[`Titolo di studio`==ts],t.test(EmpActRatio[CITTADINANZA=="ITL"],EmpActRatio[CITTADINANZA=="FRG"])), )
+}
+
+for (ts in unique(ttestcitt$`Titolo di studio`)) {
+  print(ts)
+  print(with(ttestcitt[`Titolo di studio`==ts],var.test(EmpActRatio[CITTADINANZA=="ITL"],EmpActRatio[CITTADINANZA=="FRG"])), )
+}
+
+ttestcitt %>% ggplot(aes(EmpActDiff,fill=CITTADINANZA)) + geom_density()  + facet_grid(vars(TITOLO_STUDIO),vars(Sesso)) #+ geom_smooth(method = "lm", se = F)
+
+for (ts in unique(ttestcitt$`Titolo di studio`)) {
+  print(ts)
+  print(with(ttestcitt[`Titolo di studio`==ts],t.test(EmpActDiff[CITTADINANZA=="ITL"],EmpActDiff[CITTADINANZA=="FRG"])), )
+}
+
+ttestcitt %>% ggplot(aes(EmpActRatio, y = ..density..)) + geom_freqpoly(aes(colour=CITTADINANZA, linetype = Sesso)) + facet_wrap(vars(`Titolo di studio`))
+
+ttestcitt %>% ggplot(aes(EmpActDiff)) + geom_freqpoly(aes(colour=CITTADINANZA, linetype = Sesso)) + facet_wrap(vars(`Titolo di studio`))
+
+TassiTitSt_cast1 %>% filter(!grepl("Q",TIME) & Territorio != "Italia") %>% ggplot(aes(`EMP_R_tasso di occupazione`/`ACT_R_tasso di attività`)) + geom_freqpoly(aes(colour=CITTADINANZA, linetype = Sesso)) + facet_grid(vars(`Titolo di studio`),vars(Territorio))
+```
+
+## over time
+```{r time, "out.width"=1200, "out.height"=800}
+TassiTitSt_castQuartIta <- TassiTitSt_cast1[grepl("Q",TIME) & Territorio=="Italia" ,][,`:=`("newQTime"=as.Date(paste(substr(TIME,1,4), sprintf("%02s",as.numeric(substr(TIME,nchar(TIME), nchar(TIME)))*3),"30",sep="/"),format="%Y/%m/%d"))] # )
+
+is.data.table(TassiTitSt_castQuartIta)
+TassiTitSt_castQuartIta[,.N,.(`Classe di età`)]
+
+### occ/frzlav over QTime
+p <- TassiTitSt_castQuartIta %>% 
+  ggplot(aes(newQTime,(`EMP_R_tasso di occupazione`/`ACT_R_tasso di attività`)*100)) + geom_path(aes(color=Cittadinanza))  +  
+  geom_path(aes(newQTime,`UNEM_R_tasso di disoccupazione`,color=Cittadinanza))  + 
+  scale_x_date(date_breaks = "3 months",date_labels = "%m-%Y")  + theme(axis.text.x = element_text(angle=45, hjust=0.8)) + facet_grid(vars(TITOLO_STUDIO), vars(Sesso))
+
+ggplotly(p)
+
+
+### disoccup over QTime
+library(hrbrthemes)
+p2 <- TassiTitSt_castQuartIta %>% filter(ETA1=="Y_GE15") %>% ggplot(aes(newQTime,`UNEM_R_tasso di disoccupazione`)) + # ,group=`Titolo di studio`
+  #geom_area(fill="#69b3a2", alpha=0.5) + 
+  geom_path(aes(color=Cittadinanza))  + 
+  scale_x_date(date_breaks = "3 months", date_labels = "%m-%Y") + 
+  theme(axis.text.x = element_text(angle=45, hjust=0.8)) + facet_grid(vars(`Titolo di studio`),vars(Sesso)) 
+
+ggplotly(p2)
+#p +scale_x_date(date_labels = "%m-%Y")
+
+TassiTitSt_cast1 %>% filter(!is.na(`UNEM_R_tasso di disoccupazione`) & Territorio=="Italia")
+```
+
+boxplot
+
+```{r OCCUPATI_TitStudio19_20, "out.width"=1200, "out.height"=800}
+summary(OCCUPATI_TitStudio19_20)
+occupati_dt <- as.data.table(OCCUPATI_TitStudio19_20)
+
+# occupati_dt[,max(Numero_variazioni),.(Regione,Tipologia_variazione,tipologia_incentivo,Nazionalità)]
+
+fig <- plot_ly(occupati_dt[grepl("Q",TIME) & Territorio=="Italia" & Cittadinanza != "totale" & `Titolo di studio` != "totale"], x = ~Value, color = ~`Titolo di studio`,split = ~Cittadinanza, type = "box")
+fig
+```
+
+
+
+
+
