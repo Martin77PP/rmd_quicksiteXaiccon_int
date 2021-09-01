@@ -9,17 +9,21 @@ output: html_document
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
 ```
 
-### R Markdown
+### Strumenti e dati utilizzati
 
 Il presente documento è scritto in R Markdown. Markdown è una semplice sintassi di formattazione per la creazione di documenti HTML, PDF e MS Word. Questo documento è stato compilato usando Rstudio, il più diffuso IDE per R. Per maggiori dettagli sull'utilizzo di R Markdown, vedere <http://rmarkdown.rstudio.com>.
 
 I dataset utilizzati provengono dalle banche dati Inps ed Istat, (open data e dataset pubblicati)
 
-Per la scelta dei dati ho preso spunto da un [report trovato sul vostro sito](https://mk0wwwaicconitmky98w.kinstacdn.com/wp-content/uploads/2020/10/TDH_Report-VIS-v3.pdf) e dalla conoscenzad del settore. 
+Per la scelta dei dati ho preso spunto da un [report trovato sul sito Aiccon](https://mk0wwwaicconitmky98w.kinstacdn.com/wp-content/uploads/2020/10/TDH_Report-VIS-v3.pdf) e dall'esperienza fatta personalmente nei centri di accoglienza per migranti. 
 
-I dati utilizzati non sono collegati al vostro studio ma hanno solo lo scopo di illustrare alcune possibilità di descrizione, analisi e visualizzazione dei dati tarmite R ed RStudio.
-Si tratta di dataset che presentano dati aggregati quindi non adatti per molti tipi di analisi.
-Il primo dataset preso in esame proviene dall'inps e contiene i dati sui Lavoratori in Italia per Territorio (Provincia e regione), classe di età, sesso posizione lavorativa e cittadinanza
+I dati utilizzati non sono collegati allo studio Aiccon ma hanno lo scopo di mostrare alcune possibilità di ricerca, visualizzazione ed analisi di alcuni tipi di dati.
+
+Il testo che accompagna quanto presentato non costituisce un report divulgativo e presumein alcuni casi,da parte di chi legge, una conoscenza più approfondita degli argomenti presentati.
+
+I dataset utilizzati presentano dati già aggregati, sommari dei dati originali.
+
+Il primo dataset preso in esame proviene dall'Inps e contiene i dati sui Lavoratori in Italia per Territorio (Provincia e regione), classe di età, sesso, posizione lavorativa e cittadinanza
 
 
 ```{r carica librerie e documenti}
@@ -51,12 +55,7 @@ ID_5651$`Posizione Prevalente` %>% unique()
 
 ```
 
-
-## Esplorazione dati Inps
-
-La tabella seguente riporta il numero totale di lavoratori calcolato per posizione lavorativa e cittadinanza  con alcune statistiche di base sulla distribuzione dei dati originali
-
-I singoli data point sono gli aggregati per provincia, anno, sesso, classe di età, posizione lavorativa e cittadinanza.
+Viene inizialmente presentata una descrizione dei dati presenti nel dataset utilizzato.
 
 ```{r, "out.width"=1000, "out.height"=600}
 
@@ -71,6 +70,7 @@ ID_5651dt[, TotLavAnno:=sum(Lavoratori, na.rm = T),.(Anno)]
 ID_5651dt[, TotLavAnnoPos:=sum(Lavoratori, na.rm = T),.(Anno,Posizione)]
 ID_5651dt[, TotLavProvPos:=sum(Lavoratori, na.rm = T),.(Provincia,Posizione)]
 
+skim(ID_5651dt)
 # knitr::kable(ID_5651dt[,.("Lavoratori"=sum(Lavoratori,na.rm = T),"Perc"=Lavoratori/TotLavAnno),
 #                        .(Anno,Cittadinanza)])
 # formula <- y ~ x
@@ -87,15 +87,42 @@ ID_5651dt[, TotLavProvPos:=sum(Lavoratori, na.rm = T),.(Provincia,Posizione)]
 #   scale_fill_discrete(type = c("#FF3030","#228B22")) +
 #   facet_wrap(vars(Anno),scales = "fixed") #coord_cartesian(ylim = c(0, 50))
 # cat("### ")
-
-datatable(
-ID_5651dt[Anno==2019,.("totale lavoratori"=sum(Lavoratori,na.rm = T),"minimo"=min(Lavoratori,na.rm = T),"mediana"=median(Lavoratori,na.rm = T),"massimo"=max(Lavoratori,na.rm = T),"media"=round(mean(Lavoratori,na.rm = T),2),"sd"=round(sd(Lavoratori,na.rm = T),2)),.(`Posizione Prevalente`,Cittadinanza)][order(`Posizione Prevalente`)],options = list(paging=F),height = 1000)
 ```
 
-Per visualizzare questi dati ho deciso di usare un [boxplot](https://en.wikipedia.org/wiki/Box_plot) 
-Vista la differenza anche notevole che può esserci fra province con grandi città e territorio scarsamente popolati ho trasformato i dati sull'asse delle x in logaritmi a base 10 per consentire una visualizzazione più agevole
+## Esplorazione dati Inps
+
+La successiva è una tabella ricavata dal dataset, dove sono state calcolate le percentuali rispetto alla cittadinanza con più variabili categoriche in cui dividere i dati.
+La tabella può essere ordinata e filtrata per ogni colonna.
+
+```{r, "out.width"=1200, "out.height"=600}
+# %>% pivot_wider(id_cols = `Posizione Prevalente`, names_from = Cittadinanza, values_from = stat), filter = "none")
+LavProvSexAnno <- ID_5651dt[,sum(Lavoratori,na.rm = T),.(Anno,Provincia,Posizione,Cittadinanza)] # ,Regione,AgeCut,sesso
+LavProvSexAnno_cast <- dcast(LavProvSexAnno, Anno + Provincia + Posizione ~ Cittadinanza, value.var = "V1")
+LavProvSexAnno_cast[,`:=`("TotLav" = Extracomunitari + Comunitari)][,`:=`("PercCom" = round((Comunitari/TotLav)*100,2), "PercExtra"=round((Extracomunitari/TotLav)*100,2))]
+
+# cat("### ")
+
+datatable(LavProvSexAnno_cast,class = "cell-border compact hover", filter = "top",caption = "Totale e percentuale lavoratori Comunitari ed Extracomunitari per posizione lavorativa, anno e Provincia")
+
+
+```
+
+La tabella seguente è un ulteriore sommario dal dataset e riporta il numero totale di lavoratori calcolato per posizione lavorativa e cittadinanza, vengono riportae anche alcune statistiche di base sulla distribuzione dei dati di riferimento.
 
 ```{r, "out.width"=1000, "out.height"=600}
+datatable(
+ID_5651dt[Anno==2019,.("totale lavoratori"=sum(Lavoratori,na.rm = T),"minimo"=min(Lavoratori,na.rm = T),"mediana"=median(Lavoratori,na.rm = T),"massimo"=max(Lavoratori,na.rm = T),"media"=round(mean(Lavoratori,na.rm = T),2),"sd"=round(sd(Lavoratori,na.rm = T),2)),.(`Posizione Prevalente`,Cittadinanza)][order(`Posizione Prevalente`)],options = list(paging=F),height = 900,caption = "Totale lavoratori per posizione lavorativa e cittadinanza nel 2019 in Italia")
+```
+
+I singoli data point di riferimento sono gli aggregati per provincia, anno, sesso, classe di età, posizione lavorativa e cittadinanza.
+
+Un tipo di visualizzazione della distribuzione di questi dati può essere un [boxplot](https://en.wikipedia.org/wiki/Box_plot).
+
+In questo caso sono visualizzate le distribuzioni dei lavoratori per posizione lavorativa e cittadinanza, suddivisi per genere per ogni gruppo di riferimento.
+
+Vista la differenza notevole che può esserci nel numero di lavoratori, fra province con grandi città e territori scarsamente popolati, i dati sull'asse delle x sono stati trasformati in logaritmi a base 10 per consentire una visualizzazione più agevole.
+
+```{r, "out.width"=1200, "out.height"=600}
 ggplot(ID_5651dt[Anno==2019,], aes(Lavoratori,Posizione)) +
   scale_x_log10()+
   geom_boxplot(aes(fill=sesso),notch = T, outlier.colour = "blue", outlier.shape = 1) + 
@@ -105,18 +132,8 @@ ggplot(ID_5651dt[Anno==2019,], aes(Lavoratori,Posizione)) +
   ggtitle("distribuzione lavoratori comunitari ed extracomunitari \nper posizione lavorativa nel 2019")
 
 # ggplotly(bx1)
-
-# %>% pivot_wider(id_cols = `Posizione Prevalente`, names_from = Cittadinanza, values_from = stat), filter = "none")
-LavProvSexAnno <- ID_5651dt[,sum(Lavoratori,na.rm = T),.(Anno,Provincia,Posizione,Cittadinanza)] # ,Regione,AgeCut,sesso
-LavProvSexAnno_cast <- dcast(LavProvSexAnno, Anno + Provincia + Posizione ~ Cittadinanza, value.var = "V1")
-LavProvSexAnno_cast[,`:=`("TotLav" = Extracomunitari + Comunitari)][,`:=`("PercCom" = round((Comunitari/TotLav)*100,2), "PercExtra"=round((Extracomunitari/TotLav)*100,2))]
-
-cat("### la successiva è una tabella più dettagliata ricavata dallo stesso dataset, dove sono state calcolate le percentuali rispetto alla cittadinanza con più variabili categoriche in cui dividere i dati, è possibile ordinarla e filtrarla")
-
-datatable(LavProvSexAnno_cast,class = "cell-border compact hover", filter = "top")
-
-
 ```
+
 
 Nel dataset sono riportati i dati aggregati per territorio, una modalità di visualizzazione che può rendere evidenti le differenze consentendo di sovrapporre più variabili può essere una [treemap](https://it.wikipedia.org/wiki/Treemap)  
 ```{r, "out.width"=1000, "out.height"=600}
@@ -172,11 +189,12 @@ tm1 <- treemap(LavAnnoRegPosCit[Anno==2019 & Cittadinanza=="Extracomunitari" & R
 # inter
 
 ```
-Dalla mappa si possono vedere immediatamente come varia il tipo di occupazione fra gli stranieri  fra regioni 
+Dal grafico è immediatamente visibile la differenza fra le percentuali di lavoartori Extracomunitari per tipo di occupazione tra le regioni 
 
 ## map plot
 
-Il grafico successivo mostra attraverso la mappa d'italia divisa per provincie la percentuale di lavoratori stranieri sul totale dei lavoratori per gli anni dal 2014 al 2019 questo tipo di visualizzazione rende immediatamente evidente la variazione del dato negli anni 
+Il grafico successivo mostra, attraverso la mappa d'italia divisa per provincie, la percentuale di lavoratori Extracomunitari sul totale dei lavoratori per gli anni dal 2014 al 2019.
+Questo tipo di visualizzazione rende immediatamente evidente la variazione del dato negli anni 
 
 ```{r maps, out.height=800, out.width=1200}
 library(maptools)
@@ -217,7 +235,7 @@ gg <- gg + geom_map(data=italy_map, map=italy_map,
 pl <- gg + geom_map(data=LavProvAnno_cast[Posizione=="Operaio agricolo" ,], map=italy_map,
                     aes(fill=PercExtra, map_id=Provincia),
                     color="black",size=0.1) + 
-  scale_fill_viridis_b(name="Perc ExtraCom", option = "C") +
+  scale_fill_viridis_b(name="Percentuale ExtraCom", option = "C") +
   facet_wrap(vars(Anno)) +
   expand_limits(x = italy_map$long, y = italy_map$lat) +
   theme_few()+
@@ -230,7 +248,7 @@ pl <- gg + geom_map(data=LavProvAnno_cast[Posizione=="Operaio agricolo" ,], map=
   guides(fill = guide_colorbar(barwidth = 10, barheight = .5)) + 
   geom_text(data=cnames, aes(long, lat, label = region,  
                              angle=angle, map_id =NULL),color="#FAEBD7",size=0.5) + 
-  ggtitle("Percentuale di lavoratori Extracomunitari sul totale degli occupati per Provincia")#+ theme_map()
+  ggtitle("Percentuale di lavoratori Extracomunitari sul totale dei lavoratori per Provincia")#+ theme_map()
 
 print(pl)
 
@@ -271,16 +289,19 @@ TassiTitSt <- rbindlist(list(as.data.table(TAXOCCU_RegioniTitStud16_20trim),as.d
 ```
 ### infer explor
 
-Il secondo dataset l'ho creato unendo i dati sui tassi di occupazione, attività e disoccupazione per sesso, cittadinanza e titolo di studio scaricati dalle banche dati Istat.
-I dati provengono da rilevazioni trimestrali dal 2016 al 2020 e sono riferiti a tutto il territorio nazionale.
+Il secondo dataset è stato creato unendo i dati sui tassi di occupazione, attività e disoccupazione, suddivisi per sesso, cittadinanza e titolo di studio.
 
-In questa sezione abbozzo un analisi inferenziale seguendo i pattern individuati nei dati.
+I tre dataset originari sono stati scaricati dalle banche dati Istat,
+i dati provengono da rilevazioni trimestrali dal 2016 al 2020 e sono riferiti a tutto il territorio nazionale.
 
-Il primo grafico mette a confronto il tasso di occupazione e quello di attività per sesso cittadinanza e titolo di studio. 
+In questa sezione viene fatto un esempio di analisi di una relazione lineare semplice fra due variabili continue, il tasso di attività ed il tasso di occupazione.
 
-Il grafico utilizzato è un [grafico a dispersione](https://it.wikipedia.org/wiki/Grafico_di_dispersione)
+Il primo grafico mette a confronto il tasso di occupazione e quello di attività suddivisi per sesso e cittadinanza. 
 
-```{r, "out.width"=1200, "out.height"=800}
+Il grafico utilizzato è un [grafico a dispersione](https://it.wikipedia.org/wiki/Grafico_di_dispersione) dove vengono proiettati sui rispettivi assi cartesiani i valori delle due variabili per lo stesso gruppo di riferimento.
+Nel grafico è stata riportata,per ogni gruppo di dati, la retta di regressione lineare dove è minima la somma dei quadrati delle distanze dei singoli punti dalla media
+
+```{r, "out.width"=1400, "out.height"=600}
 # ~ 
 
 TassiTitSt_cast1 <- dcast(TassiTitSt, ... ~ TIPO_DATO_FOL + `Tipo dato` , value.var = "Value" )
@@ -289,32 +310,35 @@ TassiTitSt_cast1 <- dcast(TassiTitSt, ... ~ TIPO_DATO_FOL + `Tipo dato` , value.
 
 # library(ggpmisc)
 formula <- y ~ x
-TassiTitSt_cast1 %>% filter(grepl("Q",TIME) & Territorio=="Italia") %>% ggplot(aes(`ACT_R_tasso di attività`,`EMP_R_tasso di occupazione`,color=CITTADINANZA)) + geom_point(aes(shape=`Titolo di studio`)) + scale_color_discrete(type = c("#008B8B","#EE2C2C")) + geom_smooth(method = "lm", formula = formula, se = F) + facet_grid(cols=vars(Sesso))  + theme(legend.position = "right") +
-  stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
-               formula = formula, parse = TRUE, size = 3) + ylab("tasso di occupazione") + xlab("tasso di attività") + ggtitle("grafico di dispersione tasso di occupazione su tasso di attività")
+TassiTitSt_cast1 %>% filter(grepl("Q",TIME) & Territorio=="Italia") %>% ggplot(aes(`ACT_R_tasso di attività`,`EMP_R_tasso di occupazione`,color=Cittadinanza)) + geom_point(aes(shape=`Titolo di studio`),size=2) + geom_jitter(height = 0.8) + scale_color_discrete(type = c("#008B8B","#EE2C2C")) + geom_smooth(method = "lm", formula = formula, se = F) + facet_grid(cols=vars(Sesso))  + theme(legend.position = "right",legend.text = element_text(size = 6),legend.key.size = unit(4, "points")) +
+  # stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+  #              formula = formula, parse = TRUE, size = 3) + 
+  ylab("tasso di occupazione") + xlab("tasso di attività") + ggtitle("grafico di dispersione tasso di occupazione su tasso di attività")
 
-cat("si possono notare i dati raggruppati in piccoli cluster, la forma dei punti sul grafico corrisponde ai diversi titoli di studio che soprattutto per gli italiani corrispondono grossolanamente ai cluster visibili\n la prima indicazione che possiamo trarne è che per entrambi i gruppi il titolo di studio sembra una variabile che determina una differenza rispette alle altre due \n la seconda indicazione evidente è che la retta di regressione lineare degli italiani è più in alto rispetto a quella degli starnieri segnalando che apparentemente a parità di titolo di studio gli italiani sono occupati in misura maggiore rispetto agli stranieri")
+cat("si possono notare i dati raggruppati in piccoli cluster, la forma dei punti sul grafico distingue i diversi titoli di studio che, soprattutto per gli italiani, corrispondono grossolanamente ai cluster visibili\n la prima indicazione che possiamo trarne è che per entrambi i gruppi il titolo di studio sembra una variabile che determina una differenza rispette alle altre due \n la seconda indicazione è che la retta di regressione lineare degli italiani è più in alto rispetto a quella degli starnieri, sia nei maschi che nelle femmine, segnalando che, apparentemente, a parità di tasso di attività fra i campioni di riferimento, gli italiani in cerca di lavoro risultano occupati in misura maggiore rispetto agli stranieri")
 
 ```
 
 
-proviamo a verificare questa assunzione visualizzando la distribuzione del rapporto fra tasso di occupazione (occupati/tot popolazione) e tasso di attività (forza lavoro/tot popalazione).
-La nuova variabile esprime il rapporto fra occupati e forza lavoro,
-vediamolo nel dettaglio per titolo di studio, cittadinanza e sesso
+Si può provare a verificare questa assunzione visualizzando la distribuzione del rapporto fra tasso di occupazione (occupati/tot popolazione) e tasso di attività (forza lavoro/tot popalazione).
+La nuova variabile esprime il rapporto fra occupati e forza lavoro, ovvero la frazione di quanti, fra chi cerca attivamente lavoro, risultano poi di fatto occupati.
+
+Per visualizzare la differenza dei valori di questo rapporto si può utilizzare la funzione di densità della distribuzione dei valori, per le diverse combinazioni di categorie, in questo caso per titolo di studio, cittadinanza e sesso
 ```{r, "out.width"=1200, "out.height"=600}
 # TassiTitSt_cast1 %>% filter(grepl("Q",TIME) & Territorio=="Italia") %>% ggplot(aes(`ACT_R_tasso di attività`,`EMP_R_tasso di occupazione`,color=CITTADINANZA)) + geom_point(aes( )) + geom_smooth(method = "lm", se = F) + facet_grid(vars(`Titolo di studio`),vars(Sesso)) 
 
 ttestcitt <- TassiTitSt_cast1 %>% filter(grepl("Q",TIME) & Territorio=="Italia") %>% mutate(EmpActRatio = `EMP_R_tasso di occupazione`/`ACT_R_tasso di attività`)  %>% mutate(EmpActDiff = `ACT_R_tasso di attività` - `EMP_R_tasso di occupazione`)
 
 ttestcitt %>% ggplot(aes(EmpActRatio,fill=Cittadinanza)) + geom_density()  +
-   scale_fill_discrete(type = c("#008B8B","#EE2C2C")) + facet_grid(vars(reorder(`Titolo di studio`,TITOLO_STUDIO)),vars(Sesso)) #+ geom_smooth(method = "lm", se = F)
+   scale_fill_discrete(type = c("#008B8B","#EE2C2C")) + facet_grid(vars(reorder(`Titolo di studio`,TITOLO_STUDIO)),vars(Sesso)) +
+  theme(strip.text.y = element_text(size=6, angle = 0), legend.position = "bottom")
 
 cat("")
 ```
 
 Il grafico sembra confermare la prima impressione e nello stesso tempo mostra delle importanti differenze per titolo di studio. 
-Il rapporto sembra essere fortemente a vantaggio degli italiani per chi possiede un titolo di studio più alto mentre per i titoli più bassi o nessun titolo la situazione è invertita.
-Per verificare se la differenza fra i valori medi delle distribuzioni è statisticamente significativa esguiremo Il [test t di Student](https://it.wikipedia.org/wiki/Test_t) per ogni gruppo di titolo di studio mettendo a confronto italiani e starnieri
+La probabilità di avere il rapporto più alto fra occupazione e attività sembra essere fortemente a vantaggio degli italiani per chi possiede un titolo di studio più elevato mentre per i titoli più bassi o nessun titolo la situazione è invertita.
+Per verificare se la differenza fra i valori medi delle distribuzioni è statisticamente significativa verrà eseguito il [test t di Student](https://it.wikipedia.org/wiki/Test_t), per ogni titolo di studio, mettendo a confronto italiani e stranieri.
 
 ```{r, "out.width"=1200, "out.height"=800}
 # ttestcitt <- TassiTitSt_cast1 %>% filter(grepl("Q",TIME) & Territorio=="Italia") %>% mutate(EmpActRatio = `EMP_R_tasso di occupazione`/`ACT_R_tasso di attività`) %>% filter(!is.na(EmpActRatio)) %>% pivot_wider(names_from = CITTADINANZA, values_from = EmpActRatio)
@@ -343,9 +367,10 @@ for (ts in unique(ttestcitt$`Titolo di studio`)) {
 # TassiTitSt_cast1 %>% filter(!grepl("Q",TIME) & Territorio != "Italia") %>% ggplot(aes(`EMP_R_tasso di occupazione`/`ACT_R_tasso di attività`)) + geom_freqpoly(aes(colour=CITTADINANZA, linetype = Sesso)) + facet_grid(vars(`Titolo di studio`),vars(Territorio))
 ```
 
-Il test conferma per 3 gruppi su 4 che la differenza è significativa.
+Il test conferma, con dei pvalue molto ben al di sotto della soglia convenzionale del 5%, che in 3 gruppi su 4 la differenza fra le medie delle distribuzioni sembra significativa.
 
-Proviamo infine a visualizzare il tasso di disoccupazione nel tempo rispetto alle due popolazioni considerate finora, sempre per titolo di studio, dovrebbe confermare quanto rilevato con l'analisi precedente.
+Proviamo infine a visualizzare il tasso di disoccupazione nel tempo rispetto alle due popolazioni considerate finora, sempre per titolo di studio,
+L'aspettativa è che venga confermato quanto rilevato con l'analisi precedente.
 Il grafico è esplorabile in maniera interattiva
 
 
@@ -376,6 +401,7 @@ p2 <- TassiTitSt_castQuartIta %>% filter(ETA1=="Y_GE15") %>% ggplot(aes(newQTime
 ggplotly(p2)
 #p +scale_x_date(date_labels = "%m-%Y")
 
+
 # TassiTitSt_cast1 %>% filter(!is.na(`UNEM_R_tasso di disoccupazione`) & Territorio=="Italia")
 ```
 
@@ -387,7 +413,7 @@ la prima mostra la relazione fra gli Item di un questionario, le zone evidenziat
 le comunità indivduate con lo stesso algoritmo 
 
 ![network test autismo2](https://nostalgic-borg-dec5c9.netlify.app/content/networks/mgmAllNet5C_meta.png)
-La seconda immagine mette in relazione le parole ricorrenti in report istopatologici e come sono collegate fra loro, il peso delle relazioni è dato dal numero dei report in cui ricorrono i termini collegati
+La seconda immagine mette in relazione le parole ricorrenti in report istopatologici e come sono collegate fra loro, il peso delle relazioni è dato dal numero dei report in cui ricorrono i termini collegati e la direzione l'ordine nella frase
 
 ![network VCG Liver](https://nostalgic-borg-dec5c9.netlify.app/content/networks/inflammLiver_filt0.png)
 
